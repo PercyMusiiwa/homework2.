@@ -1,0 +1,117 @@
+Sub StockAnalysis()
+    Dim ws As Worksheet
+    Dim LastRow As Long
+    Dim Ticker As String
+    Dim YearlyChange As Double
+    Dim OpenPrice As Double
+    Dim ClosePrice As Double
+    Dim PercentChange As Double
+    Dim TotalVolume As Double
+    Dim SummaryRow As Long
+    Dim GreatestIncrease As Double
+    Dim GreatestDecrease As Double
+    Dim GreatestVolume As Double
+    Dim GreatestIncreaseTicker As String
+    Dim GreatestDecreaseTicker As String
+    Dim GreatestVolumeTicker As String
+
+    For Each ws In ThisWorkbook.Worksheets
+        ' Initialize variables for each worksheet
+        LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+        SummaryRow = 2 ' Start writing summary data from row 2
+        GreatestIncrease = 0
+        GreatestDecrease = 0
+        GreatestVolume = 0
+
+        ' Set headers for the summary table
+        ws.Cells(1, 9).Value = "Ticker"
+        ws.Cells(1, 10).Value = "Yearly Change"
+        ws.Cells(1, 11).Value = "Percent Change"
+        ws.Cells(1, 12).Value = "Total Volume"
+
+        ' Initialize variables for the first row of data
+        OpenPrice = ws.Cells(2, 3).Value
+        Ticker = ws.Cells(2, 1).Value
+        TotalVolume = 0
+
+        ' Loop through the worksheet data
+        For i = 2 To LastRow
+            If Not IsEmpty(ws.Cells(i, 7)) And IsNumeric(ws.Cells(i, 7).Value) Then
+                If ws.Cells(i, 1).Value <> Ticker Then
+                    ' Calculate and output summary data
+                    ClosePrice = ws.Cells(i - 1, 6).Value
+                    YearlyChange = ClosePrice - OpenPrice
+                    PercentChange = YearlyChange / OpenPrice
+                    TotalVolume = TotalVolume + ws.Cells(i - 1, 7).Value
+
+                    ws.Cells(SummaryRow, 9).Value = Ticker
+                    ws.Cells(SummaryRow, 10).Value = YearlyChange
+                    ws.Cells(SummaryRow, 11).Value = PercentChange
+                    ws.Cells(SummaryRow, 12).Value = TotalVolume
+
+                    ' Color code positive and negative changes
+                    If YearlyChange > 0 Then
+                        ws.Cells(SummaryRow, 10).Interior.Color = RGB(0, 255, 0) ' Green
+                    Else
+                        ws.Cells(SummaryRow, 10).Interior.Color = RGB(255, 0, 0) ' Red
+                    End If
+
+                    ' Check for greatest % increase, greatest % decrease, and greatest volume
+                    If PercentChange > GreatestIncrease Then
+                        GreatestIncrease = PercentChange
+                        GreatestIncreaseTicker = Ticker
+                    End If
+                    If PercentChange < GreatestDecrease Then
+                        GreatestDecrease = PercentChange
+                        GreatestDecreaseTicker = Ticker
+                    End If
+                    If TotalVolume > GreatestVolume Then
+                        GreatestVolume = TotalVolume
+                        GreatestVolumeTicker = Ticker
+                    End If
+
+                    ' Reset variables for the new ticker
+                    SummaryRow = SummaryRow + 1
+                    OpenPrice = ws.Cells(i, 3).Value
+                    Ticker = ws.Cells(i, 1).Value
+                    TotalVolume = 0
+                Else
+                    ' Ensure that i - 1 is within the data range
+                    If i > 2 Then
+                        TotalVolume = TotalVolume + ws.Cells(i - 1, 7).Value
+                    End If
+                End If
+            End If
+        Next i
+
+        ' Handle the last row of data in the worksheet
+        ClosePrice = ws.Cells(LastRow, 6).Value
+        YearlyChange = ClosePrice - OpenPrice
+        PercentChange = YearlyChange / OpenPrice
+        TotalVolume = TotalVolume + ws.Cells(LastRow, 7).Value
+
+        ws.Cells(SummaryRow, 9).Value = Ticker
+        ws.Cells(SummaryRow, 10).Value = YearlyChange
+        ws.Cells(SummaryRow, 11).Value = PercentChange
+        ws.Cells(SummaryRow, 12).Value = TotalVolume
+
+        ' Color code positive and negative changes
+        If YearlyChange > 0 Then
+            ws.Cells(SummaryRow, 10).Interior.Color = RGB(0, 255, 0) ' Green
+        Else
+            ws.Cells(SummaryRow, 10).Interior.Color = RGB(255, 0, 0) ' Red
+        End If
+
+        ' Output greatest % increase, greatest % decrease, and greatest volume
+        ws.Cells(2, 15).Value = "Greatest % Increase"
+        ws.Cells(3, 15).Value = "Greatest % Decrease"
+        ws.Cells(4, 15).Value = "Greatest Total Volume"
+        ws.Cells(2, 16).Value = GreatestIncreaseTicker
+        ws.Cells(3, 16).Value = GreatestDecreaseTicker
+        ws.Cells(4, 16).Value = GreatestVolumeTicker
+        ws.Cells(2, 17).Value = Format(GreatestIncrease, "0.00%")
+        ws.Cells(3, 17).Value = Format(GreatestDecrease, "0.00%")
+        ws.Cells(4, 17).Value = GreatestVolume
+    Next ws
+End Sub
+ 
